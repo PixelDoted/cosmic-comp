@@ -153,7 +153,7 @@ impl CosmicWindow {
     pub fn pending_size(&self) -> Option<Size<i32, Logical>> {
         self.0.with_program(|p| {
             let mut size = p.window.pending_size()?;
-            if p.has_ssd(true) {
+            if p.has_ssd(true) && p.window.x11_surface().is_none() {
                 size.h += SSD_HEIGHT;
             }
             Some(size)
@@ -162,13 +162,15 @@ impl CosmicWindow {
 
     pub fn set_geometry(&self, geo: Rectangle<i32, Global>) {
         self.0.with_program(|p| {
+            let ssd_height = if p.has_ssd(true) && p.window.x11_surface().is_none() { SSD_HEIGHT } else { 0 };
+            
             let loc = (
                 geo.loc.x,
-                geo.loc.y + if p.has_ssd(true) { SSD_HEIGHT } else { 0 },
+                geo.loc.y + ssd_height,
             );
             let size = (
                 geo.size.w,
-                std::cmp::max(geo.size.h - if p.has_ssd(true) { SSD_HEIGHT } else { 0 }, 0),
+                std::cmp::max(geo.size.h - ssd_height, 0),
             );
             p.window
                 .set_geometry(Rectangle::from_loc_and_size(loc, size));
